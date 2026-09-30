@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: devices-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/devices_db
+    username: devices_user
+    password: devices_pass
+  kafka:
+    bootstrap-servers: localhost:19092
+    consumer:
+      group-id: devices-api
+
+app:
+  cache:
+    ttl-seconds: 300
+  kafka:
+    consumer-enabled: true
+    topics:
+      device-commands: devices.commands.v1
+      partitions: 3
+      replication-factor: 1

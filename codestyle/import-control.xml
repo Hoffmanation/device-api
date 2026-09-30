@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE import-control PUBLIC
+    "-//Puppy Crawl//DTD Import Control 1.4//EN"
+    "http://checkstyle.sourceforge.net/dtds/import_control_1_4.dtd">
+
+<import-control pkg="com.swarco.traffic.controller">
+    <allow pkg=".*" regex="true"/>
+
+    <subpackage name=".*domain.*" regex="true">
+        <allow pkg=".*domain.*" regex="true"/>
+        <allow pkg=".*configuration.*" regex="true"/>
+        <allow pkg=".*shared.domain.*" regex="true"/>
+        <disallow pkg=".*ports.*" regex="true"/>
+        <disallow pkg=".*api.*" regex="true"/>
+    </subpackage>
+
+    <subpackage name=".*ports.*" regex="true">
+        <allow pkg=".*ports.*" regex="true"/>
+        <allow pkg=".*shared.ports.*" regex="true"/>
+        <disallow pkg=".*api.*" regex="true"/>
+    </subpackage>
+
+    <subpackage name=".*api.*" regex="true">
+        <allow pkg=".*api.*" regex="true"/>
+        <allow pkg=".*shared.api.*" regex="true"/>
+        <disallow pkg=".*ports.*" regex="true"/>
+    </subpackage>
+</import-control>
