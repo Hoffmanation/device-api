@@ -3,6 +3,7 @@ CREATE TABLE devices (
     name        VARCHAR(255) NOT NULL,
     brand       VARCHAR(255) NOT NULL,
     state       VARCHAR(32)  NOT NULL,
+    version     BIGINT       NOT NULL DEFAULT 0,
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
 );

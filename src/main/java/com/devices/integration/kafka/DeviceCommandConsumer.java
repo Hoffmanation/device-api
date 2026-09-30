@@ -1,4 +1,4 @@
-package com.devices.kafka;
+package com.devices.integration.kafka;
 
 import com.devices.domain.event.DeviceEventMesssage;
 import com.devices.domain.exception.DeviceNotFoundException;

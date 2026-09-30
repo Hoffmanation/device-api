@@ -5,6 +5,7 @@ import com.devices.api.model.CreateDeviceRequest;
 import com.devices.api.model.DeviceResponse;
 import com.devices.api.model.UpdateDeviceRequest;
 import com.devices.application.service.DeviceApplicationManager;
+import com.devices.domain.mapper.DeviceMapper;
 import com.devices.domain.model.DeviceState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class DeviceController implements DeviceApi {
 
     private final DeviceApplicationManager deviceApplicationManager;
+    private final DeviceMapper deviceMapper;
 
     @Override
     public ResponseEntity<CommandAcceptedResponse> createDevice(CreateDeviceRequest request) {
@@ -39,24 +41,27 @@ public class DeviceController implements DeviceApi {
     }
 
     @Override
-    public ResponseEntity<DeviceResponse> getDevice(UUID deviceId) {
-        log.info("Fetching device {}", deviceId);
-        var response = deviceApplicationManager.getDevice(deviceId);
-        return ResponseEntity.ok(response);
-    }
-
-    @Override
-    public ResponseEntity<List<DeviceResponse>> getDevices(String brand, DeviceState state) {
-        log.info("Fetching devices brand={} state={}", brand, state);
-        var responses = deviceApplicationManager.getDevices(brand, state);
-        return ResponseEntity.ok(responses);
-    }
-
-    @Override
     public ResponseEntity<CommandAcceptedResponse> deleteDevice(UUID deviceId) {
         log.info("Accepting delete command for device {}", deviceId);
         var response = deviceApplicationManager.deleteDevice(deviceId);
         return ResponseEntity.accepted().body(response);
+    }
+
+    @Override
+    public ResponseEntity<DeviceResponse> getDevice(UUID deviceId) {
+        log.info("Fetching device {}", deviceId);
+        var device = deviceApplicationManager.getDevice(deviceId);
+        var response = deviceMapper.toResponse(device);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<List<DeviceResponse>> getDevices(String brand, DeviceState state, int page, int size) {
+        log.info("Fetching devices brand={} state={}", brand, state);
+        var responses = deviceApplicationManager.getDevices(brand, state, page, size).stream()
+            .map(deviceMapper::toResponse)
+            .toList();
+        return ResponseEntity.ok(responses);
     }
 }
 

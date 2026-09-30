@@ -2,7 +2,6 @@ package com.devices.application.service;
 
 import com.devices.api.model.CommandAcceptedResponse;
 import com.devices.api.model.CreateDeviceRequest;
-import com.devices.api.model.DeviceResponse;
 import com.devices.api.model.UpdateDeviceRequest;
 import com.devices.application.port.DeviceCommandPublisher;
 import com.devices.domain.event.DeviceEventMesssage;
@@ -17,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,14 +68,14 @@ public class DeviceApplicationManager {
 
     @Transactional(readOnly = true)
     @Cacheable(cacheNames = "devicesById", key = "#deviceId")
-    public DeviceResponse getDevice(UUID deviceId) {
+    public Device getDevice(UUID deviceId) {
         log.trace("Cache miss for device {}", deviceId);
-        return deviceMapper.toResponse(getDomainById(deviceId));
+        return getDomainById(deviceId);
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(cacheNames = "devicesSearch", key = "(#brand ?: 'null') + '|' + (#state ?: 'null')")
-    public List<DeviceResponse> getDevices(String brand, DeviceState state) {
+    @Cacheable(cacheNames = "devicesSearch", key = "(#brand ?: 'null') + '|' + (#state ?: 'null') + '|' + #page + '|' + #size")
+    public List<Device> getDevices(String brand, DeviceState state, int page, int size) {
         log.info("Cache miss for device search. brand={}, state={}", brand, state);
 
         record DeviceFilter(String brand, DeviceState state) {
@@ -84,15 +84,17 @@ public class DeviceApplicationManager {
         var entities = switch (new DeviceFilter(brand, state)) {
             case DeviceFilter(var requestedBrand, var requestedState)
                 when requestedBrand != null && requestedState != null ->
-                deviceRepository.findAllByBrandIgnoreCaseAndStateOrderByCreatedAtDesc(requestedBrand, requestedState);
+                deviceRepository.findAllByBrandIgnoreCaseAndStateOrderByCreatedAtDesc(requestedBrand, requestedState, PageRequest.of(page, size));
             case DeviceFilter(var requestedBrand, _)
-                when requestedBrand != null -> deviceRepository.findAllByBrandIgnoreCaseOrderByCreatedAtDesc(requestedBrand);
+                when requestedBrand != null ->
+                deviceRepository.findAllByBrandIgnoreCaseOrderByCreatedAtDesc(requestedBrand, PageRequest.of(page, size));
             case DeviceFilter(_, var requestedState)
-                when requestedState != null -> deviceRepository.findAllByStateOrderByCreatedAtDesc(requestedState);
-            default -> deviceRepository.findAllByOrderByCreatedAtDesc();
+                when requestedState != null ->
+                deviceRepository.findAllByStateOrderByCreatedAtDesc(requestedState, PageRequest.of(page, size));
+            default -> deviceRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size));
         };
 
-        return deviceMapper.toResponses(deviceMapper.toDomains(entities));
+        return deviceMapper.toDomains(entities.getContent());
     }
 
     public CommandAcceptedResponse deleteDevice(UUID deviceId) {

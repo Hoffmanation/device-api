@@ -4,13 +4,13 @@ import com.devices.domain.exception.DeviceDeletionNotAllowedException;
 import com.devices.domain.exception.DeviceNotFoundException;
 import com.devices.domain.exception.DeviceUpdateNotAllowedException;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -27,12 +27,11 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdviceAd
 
 import java.lang.reflect.Type;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Slf4j
 public class ApiExceptionHandler extends RequestBodyAdviceAdapter {
 
@@ -110,26 +109,10 @@ public class ApiExceptionHandler extends RequestBodyAdviceAdapter {
     public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException exception) {
         var status = HttpStatus.BAD_REQUEST;
         var errorMessage = "Invalid request body";
-        var errorCode = "REQUEST_BODY_NOT_READABLE";
-        String details = null;
+        var errorCode = isInvalidDeviceState(exception) ? "INVALID_DEVICE_STATE" : "REQUEST_BODY_NOT_READABLE";
+        var details = isInvalidDeviceState(exception) ? "state must be one of AVAILABLE, INACTIVE, IN_USE" : null;
 
-        if (exception.getCause() instanceof tools.jackson.databind.exc.InvalidFormatException invalidFormat
-            && invalidFormat.getTargetType() != null
-            && invalidFormat.getTargetType().isEnum()) {
-
-            var allowedValues = Arrays.stream(invalidFormat.getTargetType().getEnumConstants())
-                .map(Object::toString)
-                .collect(Collectors.joining(", "));
-
-            errorCode = "INVALID_ENUM_VALUE";
-            details = "'" + invalidFormat.getValue() + "' is not valid for "
-                + invalidFormat.getTargetType().getSimpleName()
-                + ". Allowed values: " + allowedValues;
-        }
-
-        logErrorContext(errorMessage + (details != null ? " " + details : ""),
-            buildErrorContextForStructualLog(status), exception);
-
+        logErrorContext(errorMessage + (details != null ? " " + details : ""), buildErrorContextForStructualLog(status), exception);
         var errorResponse = ErrorResponse.of(status, errorCode, errorMessage, null, details);
         return ResponseEntity.status(status).body(errorResponse);
     }
@@ -156,9 +139,10 @@ public class ApiExceptionHandler extends RequestBodyAdviceAdapter {
         while (current != null) {
             String typeName = current.getClass().getName();
             String message = current.getMessage();
+            // Multiple Jackson classes with the same name exists
             if (typeName.contains("InvalidFormatException")
                 && message != null
-                && message.contains("model.domain.com.devices.DeviceState")) {
+                && message.contains("DeviceState")) {
                 return true;
             }
             current = current.getCause();

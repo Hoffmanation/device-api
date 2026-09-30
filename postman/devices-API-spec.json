@@ -1,0 +1,413 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Devices",
+      "description": "CRUD API for managing device resources"
+    }
+  ],
+  "paths": {
+    "/api/v1/devices": {
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Fetch all devices or filter by brand and state, with pagination",
+        "operationId": "getDevices",
+        "parameters": [
+          {
+            "name": "brand",
+            "in": "query",
+            "description": "Filter by brand",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Filter by state",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AVAILABLE",
+                "IN_USE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devices found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Create a device",
+        "operationId": "createDevice",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Create command accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandAcceptedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{deviceId}": {
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Fetch a single device",
+        "operationId": "getDevice",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "description": "Device identifier",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Delete a device",
+        "operationId": "deleteDevice",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "description": "Device identifier",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Delete command accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandAcceptedResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Partially update a device",
+        "operationId": "updateDevice",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "description": "Device identifier",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Update command accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandAcceptedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateDeviceRequest": {
+        "type": "object",
+        "description": "Payload for creating a new device",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "eSIM Gateway X1",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "brand": {
+            "type": "string",
+            "example": "Motorola",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "IN_USE",
+              "INACTIVE"
+            ],
+            "example": "AVAILABLE"
+          }
+        },
+        "required": [
+          "brand",
+          "name",
+          "state"
+        ]
+      },
+      "CommandAcceptedResponse": {
+        "type": "object",
+        "description": "Acknowledgement returned when a device write command was accepted for asynchronous processing",
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "3e7c5d5c-7b24-4b6a-8d5d-fdff826ff825",
+            "readOnly": true
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "fd6b6e70-8d0b-4dda-bab5-2320d2ad4d39",
+            "readOnly": true
+          },
+          "commandType": {
+            "type": "string",
+            "example": "DEVICE_CREATE_REQUESTED",
+            "readOnly": true
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-28T09:00:00Z",
+            "readOnly": true
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "attribute": {
+            "type": "string"
+          },
+          "value": {},
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateDeviceRequest": {
+        "type": "object",
+        "description": "Payload for partially updating an existing device",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Industrial LTE Router Pro",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "brand": {
+            "type": "string",
+            "example": "Samsung",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "IN_USE",
+              "INACTIVE"
+            ],
+            "example": "INACTIVE"
+          }
+        }
+      },
+      "DeviceResponse": {
+        "type": "object",
+        "description": "Representation of a device resource",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "fd6b6e70-8d0b-4dda-bab5-2320d2ad4d39",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "example": "eSIM Gateway X1"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Motorola"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "IN_USE",
+              "INACTIVE"
+            ],
+            "example": "AVAILABLE"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-28T09:00:00Z",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-28T09:05:00Z",
+            "readOnly": true
+          }
+        }
+      }
+    }
+  }
+}

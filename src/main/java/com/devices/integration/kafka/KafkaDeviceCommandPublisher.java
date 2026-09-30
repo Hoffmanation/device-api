@@ -1,4 +1,4 @@
-package com.devices.kafka;
+package com.devices.integration.kafka;
 
 import com.devices.application.port.DeviceCommandPublisher;
 import com.devices.domain.event.DeviceEventMesssage;

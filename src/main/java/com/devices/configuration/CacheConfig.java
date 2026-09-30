@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
@@ -27,7 +28,14 @@ public class CacheConfig {
         // 10 minutes
         @Value("${app.cache.ttl-seconds:600}") long ttlSeconds
     ) {
-        GenericJacksonJsonRedisSerializer jsonSerializer = new GenericJacksonJsonRedisSerializer(jsonMapper);
+        GenericJacksonJsonRedisSerializer jsonSerializer = GenericJacksonJsonRedisSerializer.builder()
+            .enableDefaultTyping(
+                BasicPolymorphicTypeValidator.builder()
+                    //Compatibility issue between domain DTOs and LinkedHashMap
+                    .allowIfSubType("com.devices.")
+                    .allowIfSubType("java.util.")
+                    .build())
+            .build();
 
         RedisCacheConfiguration baseConfig = RedisCacheConfiguration.defaultCacheConfig()
             .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))

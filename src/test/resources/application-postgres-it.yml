@@ -1,0 +1,16 @@
+spring:
+  cache:
+    type: none
+  kafka:
+    bootstrap-servers: localhost:19092
+    listener:
+      auto-startup: false
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+app:
+  kafka:
+    consumer-enabled: false
+

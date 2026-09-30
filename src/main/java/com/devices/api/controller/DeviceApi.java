@@ -42,6 +42,12 @@ public interface DeviceApi {
         @Valid @RequestBody UpdateDeviceRequest request
     );
 
+    @DeleteMapping("/{deviceId}")
+    @Operation(summary = "Delete a device")
+    @ApiResponse(responseCode = "202", description = "Delete command accepted", content = @Content(schema = @Schema(implementation = CommandAcceptedResponse.class)))
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    ResponseEntity<CommandAcceptedResponse> deleteDevice(@Parameter(description = "Device identifier") @PathVariable UUID deviceId);
+
     @GetMapping("/{deviceId}")
     @Operation(summary = "Fetch a single device")
     @ApiResponse(responseCode = "200", description = "Device found", content = @Content(schema = @Schema(implementation = DeviceResponse.class)))
@@ -49,18 +55,12 @@ public interface DeviceApi {
     ResponseEntity<DeviceResponse> getDevice(@Parameter(description = "Device identifier") @PathVariable UUID deviceId);
 
     @GetMapping
-    @Operation(summary = "Fetch all devices or filter by brand and state")
-    @ApiResponse(responseCode = "200", description = "Devices found",
-        content = @Content(array = @ArraySchema(schema = @Schema(implementation = DeviceResponse.class))))
+    @Operation(summary = "Fetch all devices or filter by brand and state, with pagination")
+    @ApiResponse(responseCode = "200", description = "Devices found", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DeviceResponse.class))))
     ResponseEntity<List<DeviceResponse>> getDevices(
         @Parameter(description = "Filter by brand") @RequestParam(required = false) String brand,
-        @Parameter(description = "Filter by state") @RequestParam(required = false) DeviceState state
-    );
-
-    @DeleteMapping("/{deviceId}")
-    @Operation(summary = "Delete a device")
-    @ApiResponse(responseCode = "202", description = "Delete command accepted", content = @Content(schema = @Schema(implementation = CommandAcceptedResponse.class)))
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    ResponseEntity<CommandAcceptedResponse> deleteDevice(@Parameter(description = "Device identifier") @PathVariable UUID deviceId);
+        @Parameter(description = "Filter by state") @RequestParam(required = false) DeviceState state,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size);
 }
 
