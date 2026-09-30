@@ -4,6 +4,7 @@ import com.devices.domain.exception.DeviceDeletionNotAllowedException;
 import com.devices.domain.exception.DeviceNotFoundException;
 import com.devices.domain.exception.DeviceUpdateNotAllowedException;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Builder;
@@ -26,7 +27,9 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdviceAd
 
 import java.lang.reflect.Type;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -107,10 +110,26 @@ public class ApiExceptionHandler extends RequestBodyAdviceAdapter {
     public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException exception) {
         var status = HttpStatus.BAD_REQUEST;
         var errorMessage = "Invalid request body";
-        var errorCode = isInvalidDeviceState(exception) ? "INVALID_DEVICE_STATE" : "REQUEST_BODY_NOT_READABLE";
-        var details = isInvalidDeviceState(exception) ? "state must be one of AVAILABLE, INACTIVE, IN_USE" : null;
+        var errorCode = "REQUEST_BODY_NOT_READABLE";
+        String details = null;
 
-        logErrorContext(errorMessage + (details != null ? " " + details : ""), buildErrorContextForStructualLog(status), exception);
+        if (exception.getCause() instanceof tools.jackson.databind.exc.InvalidFormatException invalidFormat
+            && invalidFormat.getTargetType() != null
+            && invalidFormat.getTargetType().isEnum()) {
+
+            var allowedValues = Arrays.stream(invalidFormat.getTargetType().getEnumConstants())
+                .map(Object::toString)
+                .collect(Collectors.joining(", "));
+
+            errorCode = "INVALID_ENUM_VALUE";
+            details = "'" + invalidFormat.getValue() + "' is not valid for "
+                + invalidFormat.getTargetType().getSimpleName()
+                + ". Allowed values: " + allowedValues;
+        }
+
+        logErrorContext(errorMessage + (details != null ? " " + details : ""),
+            buildErrorContextForStructualLog(status), exception);
+
         var errorResponse = ErrorResponse.of(status, errorCode, errorMessage, null, details);
         return ResponseEntity.status(status).body(errorResponse);
     }
