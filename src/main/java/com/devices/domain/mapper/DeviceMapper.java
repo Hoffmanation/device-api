@@ -1,5 +1,8 @@
 package com.devices.domain.mapper;
 
+import com.devices.api.model.CreateDeviceRequest;
+import com.devices.api.model.DeviceResponse;
+import com.devices.api.model.ReplaceDeviceRequest;
 import com.devices.domain.model.Device;
 import com.devices.ports.jpa.entity.DeviceEntity;
 import org.mapstruct.Mapper;
